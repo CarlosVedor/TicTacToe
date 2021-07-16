@@ -1,8 +1,8 @@
 package innowave.tech;
 
 public class Player {
-    private String name;
-    private char symbol;
+    private final String name;
+    private final char symbol;
 
     /**
      * Constructor for Player class
