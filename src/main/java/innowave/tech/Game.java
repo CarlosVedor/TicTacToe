@@ -16,7 +16,6 @@ public class Game {
         this.isRunning = true;
         this.board = board;
         this.players = new ArrayList<>();
-        this.currentPlayer = null;
     }
 
     //region Getters
@@ -27,35 +26,44 @@ public class Game {
     public Player getCurrentPlayer() {
         return currentPlayer;
     }
+
+    public ArrayList<Player> getPlayers() {
+        return players;
+    }
+
     //endregion
 
     /**
      * Adds a valid player to the list of players in the game, unless the operation fails
-     * @param playerName the name of the new player to add
-     * @param symbol the symbol to represent the new player's moves
+     * @param newPlayer the new player to add
      * @return True if the operation was successful, false otherwise
      */
-    public boolean addValidPlayer(String playerName, char symbol){
+    public boolean addValidPlayer(Player newPlayer){
         String feedbackMsg;
         boolean operationSuccessful = false;
-        if (symbol != Board.EMPTY_SYMBOL) {
-            if (!findPlayer(playerName)) {
-                if (!symbolExists(symbol)) {
-                    Player newPlayer = new Player(playerName, symbol);
-                    players.add(newPlayer);
-                    if (players.size() == 1){ //first player, set as current player
-                        currentPlayer = newPlayer;
+        if (newPlayer != null) {
+            String playerName = newPlayer.getName();
+            char playerSymbol = newPlayer.getSymbol();
+            if (playerSymbol != Board.EMPTY_SYMBOL) {
+                if (!findPlayer(playerName)) {
+                    if (!symbolExists(newPlayer.getSymbol())) {
+                        players.add(newPlayer);
+                        if (players.size() == 1){ //first player, set as current player
+                            currentPlayer = newPlayer;
+                        }
+                        feedbackMsg = "Player '" + playerName + "' added with symbol '" + playerSymbol + "'";
+                        operationSuccessful = true;
+                    } else {
+                        feedbackMsg = "Game.addPlayer -> Symbol is already taken";
                     }
-                    feedbackMsg = "Player '" + playerName + "' added with symbol '" + symbol + "'";
-                    operationSuccessful = true;
                 } else {
-                    feedbackMsg = "Game.addPlayer -> Symbol is already taken";
+                    feedbackMsg = "Game.addPlayer -> Player name already exists";
                 }
             } else {
-                feedbackMsg = "Game.addPlayer -> Player name already exists";
+                feedbackMsg = "Game.addPlayer -> Symbol cannot be the same as the empty symbol";
             }
         } else {
-            feedbackMsg = "Game.addPlayer -> Symbol cannot be the same as the empty symbol";
+            feedbackMsg = "Game.addPlayer -> Player cannot be null";
         }
 
         printFeedbackMsg(feedbackMsg);
@@ -83,14 +91,16 @@ public class Game {
     /**
      * Executes the next move of the game, for the current player and
      * the input specified
+     * @param userInput the user input
+     * @return True if the move was done successfully, false otherwise
      */
-    public void playMove(String userInput) {
-        if (!players.isEmpty()) {
-            boolean validPlayerMove;
-            do {
-                int[] parsedUserInput = validXYFormat(userInput);
-                validPlayerMove = board.playMove(currentPlayer, parsedUserInput[0], parsedUserInput[1]);
-            } while (!validPlayerMove);
+    public boolean playMove(String userInput) {
+        if (!players.isEmpty() && isRunning) {
+            int[] parsedUserInput = validXYFormat(userInput);
+            boolean validPlayerMove = board.playMove(currentPlayer, parsedUserInput[0], parsedUserInput[1]);
+            if (!validPlayerMove){ //invalid move, move is not performed
+                return false;
+            }
 
             System.out.println(board); //show updated board
 
@@ -98,12 +108,10 @@ public class Game {
             if (board.getTotalMovesPlayed() >= players.size() * 2 + 1) {
                 if (board.checkPlayerVictory(currentPlayer)) {
                     playerVictory();
+                } else if (board.getTotalMovesPlayed() == board.getRowCount() * board.getColCount()) {
+                    //if board is completely full, no more plays can be done
+                    gameDraw();
                 }
-            }
-
-            //if board is completely full, no more plays can be done
-            if (board.getTotalMovesPlayed() == board.getRowCount() * board.getColCount()) {
-                gameDraw();
             }
 
             //change currentPlayer to the following player
@@ -111,7 +119,10 @@ public class Game {
 
         } else { //no players, game ends
             end();
+            return false;
         }
+
+        return true;
     }
 
     /**
@@ -158,15 +169,17 @@ public class Game {
      */
     private int[] validXYFormat(String input){
         int[] result = {-1, -1}; //invalid to play moves
-        String[] splitCoordinates = input.split(",");
-        if (splitCoordinates.length == 2){ //must detect only two coordinates
-            try {
-                int userInputX = Integer.parseInt(splitCoordinates[0]);
-                int userInputY = Integer.parseInt(splitCoordinates[1]);
-                result[0] = userInputX;
-                result[1] = userInputY;
-            } catch (NumberFormatException e) {
-                //could not parse input as int, invalid
+        if (input != null) {
+            String[] splitCoordinates = input.split(",");
+            if (splitCoordinates.length == 2){ //must detect only two coordinates
+                try {
+                    int userInputX = Integer.parseInt(splitCoordinates[0]);
+                    int userInputY = Integer.parseInt(splitCoordinates[1]);
+                    result[0] = userInputX;
+                    result[1] = userInputY;
+                } catch (NumberFormatException e) {
+                    //could not parse input as int, invalid
+                }
             }
         }
 

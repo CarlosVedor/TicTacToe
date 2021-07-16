@@ -77,7 +77,7 @@ public class Board {
      */
     private boolean validateMove(int x, int y) {
         return x >= 0 && x < colCount && y >= 0 && y < rowCount
-                && coordinates[x][y] == ' ';
+                && coordinates[x][y] == EMPTY_SYMBOL;
     }
 
     /**
@@ -86,7 +86,8 @@ public class Board {
      * @return Returns true if the player has won the game in the latest move. Returns false otherwise.
      */
     public boolean checkPlayerVictory(Player player) {
-        if (player != null){
+        if (player != null &&
+                player.getSymbol() == coordinates[latestX][latestY]){// makes sure this player is the one who did the latest move
             char checkSymbol = player.getSymbol();
 
             //check horizontally

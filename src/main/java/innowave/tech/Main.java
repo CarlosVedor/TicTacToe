@@ -9,16 +9,19 @@ public class Main {
         Board board = new Board(3, 3);
         Game game = new Game(board);
         Scanner scanner = new Scanner(System.in);
+        Player player1 = new Player("James" , 'X');
+        Player player2 = new Player("Jessy" , 'O');
 
-        game.addValidPlayer("James", 'X');
-        game.addValidPlayer("Jessy", 'O');
+        game.addValidPlayer(player1);
+        game.addValidPlayer(player2);
 
         System.out.println(board);
 
         while (game.isRunning()){
             if (game.getCurrentPlayer() != null) {
-                System.out.println(game.getCurrentPlayer().getName() + ", insert coordinates in the format 'x,y': ");
-                game.playMove(scanner.nextLine());
+                do {
+                    System.out.println(game.getCurrentPlayer().getName() + ", insert coordinates in the format 'x,y': ");
+                } while (!game.playMove(scanner.nextLine()));
             } else { //no currentPlayer means no players
                 System.out.println("There are no players playing...");
                 game.end();
