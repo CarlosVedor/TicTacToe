@@ -1,5 +1,7 @@
 package innowave.tech;
 
+import org.apache.log4j.Logger;
+
 import java.util.ArrayList;
 
 public class Game {
@@ -7,12 +9,14 @@ public class Game {
     private Board board;
     private ArrayList<Player> players;
     private Player currentPlayer;
+    private static final Logger logger = Logger.getLogger(Game.class);
 
     /**
      * Constructor for class Game
      * @param board the board in which the game will be played
      */
     public Game(Board board) {
+        logger.debug("Initializing " + this.getClass().getSimpleName() + " instance");
         this.isRunning = true;
         this.board = board;
         this.players = new ArrayList<>();
@@ -26,11 +30,6 @@ public class Game {
     public Player getCurrentPlayer() {
         return currentPlayer;
     }
-
-    public ArrayList<Player> getPlayers() {
-        return players;
-    }
-
     //endregion
 
     /**
@@ -39,34 +38,36 @@ public class Game {
      * @return True if the operation was successful, false otherwise
      */
     public boolean addValidPlayer(Player newPlayer){
-        String feedbackMsg;
+        logger.debug("addValidPlayer -> Adding a new valid player");
         boolean operationSuccessful = false;
         if (newPlayer != null) {
             String playerName = newPlayer.getName();
             char playerSymbol = newPlayer.getSymbol();
             if (playerSymbol != Board.EMPTY_SYMBOL) {
                 if (!findPlayer(playerName)) {
+                    logger.debug("addValidPlayer -> No player found, proceeding");
                     if (!symbolExists(newPlayer.getSymbol())) {
+                        logger.debug("addValidPlayer -> No symbol found, proceeding");
                         players.add(newPlayer);
                         if (players.size() == 1){ //first player, set as current player
+                            logger.debug("addValidPlayer -> Setting player '" + newPlayer.getName() + "' as the current player");
                             currentPlayer = newPlayer;
                         }
-                        feedbackMsg = "Player '" + playerName + "' added with symbol '" + playerSymbol + "'";
+                        logger.info("Player '" + playerName + "' added with symbol '" + playerSymbol + "'");
                         operationSuccessful = true;
                     } else {
-                        feedbackMsg = "Game.addPlayer -> Symbol is already taken";
+                        logger.info("addValidPlayer -> Symbol is already taken");
                     }
                 } else {
-                    feedbackMsg = "Game.addPlayer -> Player name already exists";
+                    logger.info("addValidPlayer -> Player name already exists");
                 }
             } else {
-                feedbackMsg = "Game.addPlayer -> Symbol cannot be the same as the empty symbol";
+                logger.info("addValidPlayer -> Symbol cannot be the same as the empty symbol");
             }
         } else {
-            feedbackMsg = "Game.addPlayer -> Player cannot be null";
+            logger.warn("addValidPlayer -> Player cannot be null");
         }
 
-        printFeedbackMsg(feedbackMsg);
         return operationSuccessful;
     }
 
@@ -76,6 +77,7 @@ public class Game {
      * @return True if there is a player with the specified name, false otherwise
      */
     private boolean findPlayer(String playerName){
+        logger.debug("findPlayer -> Searching for a player with name " + playerName);
         return players.stream().anyMatch(p -> p.getName().equals(playerName));
     }
 
@@ -85,6 +87,7 @@ public class Game {
      * @return True if there was a symbol found in the list of players, false otherwise
      */
     private boolean symbolExists(char symbol){
+        logger.debug("symbolExists -> Checking if a player with symbol '" + symbol + "' exists");
         return players.stream().anyMatch(p -> p.getSymbol() == symbol);
     }
 
@@ -95,13 +98,16 @@ public class Game {
      * @return True if the move was done successfully, false otherwise
      */
     public boolean playMove(String userInput) {
+        logger.debug("playMove -> Playing a move with input " + userInput);
         if (!players.isEmpty() && isRunning) {
             int[] parsedUserInput = validXYFormat(userInput);
             boolean validPlayerMove = board.playMove(currentPlayer, parsedUserInput[0], parsedUserInput[1]);
             if (!validPlayerMove){ //invalid move, move is not performed
+                logger.info("Invalid move for input " + userInput);
                 return false;
             }
 
+            logger.debug("playMove -> Move played, printing updated board");
             System.out.println(board); //show updated board
 
             //game can only be won if there are at least 3 plays done by a single player
@@ -114,10 +120,12 @@ public class Game {
                 }
             }
 
-            //change currentPlayer to the following player
-            nextPlayerSetup();
+            if (isRunning) { //change currentPlayer to the following player
+                nextPlayerSetup();
+            }
 
         } else { //no players, game ends
+            logger.warn("playMove -> No players detected");
             end();
             return false;
         }
@@ -129,20 +137,27 @@ public class Game {
      * Sets up the game for the following player
      */
     private void nextPlayerSetup(){
+        logger.debug("nextPlayerSetup -> Setting up game for the next player");
         int indexOfNextPlayer = players.indexOf(currentPlayer) + 1;
         if (indexOfNextPlayer >= players.size()) { //loop around if it's the last player
             indexOfNextPlayer = 0;
         }
 
         currentPlayer = players.get(indexOfNextPlayer);
+
+        if (this.currentPlayer != null) {
+            logger.debug("nextPlayerSetup -> Current player is now '" + this.currentPlayer.getName() + "'");
+        } else {
+            logger.warn("nextPlayerSetup -> Current player is null");
+        }
     }
 
     /**
      * Wraps up the game after a player has made a winning move
      */
     private void playerVictory() {
-        if(currentPlayer != null)
-           printFeedbackMsg(currentPlayer.getName() + " has won the game!");
+        if (currentPlayer != null)
+            logger.info(this.currentPlayer.getName() + " has won the game!");
         end();
     }
 
@@ -150,16 +165,8 @@ public class Game {
      * Wraps up the game after a draw has been reached
      */
     private void gameDraw() {
-        printFeedbackMsg("The game ended in a draw.");
+        logger.info("Draw.");
         end();
-    }
-
-    /**
-     * Prints a feedback message in the console for the user to read
-     * @param feedbackMsg the feedback message
-     */
-    private void printFeedbackMsg(String feedbackMsg){
-        System.out.println(feedbackMsg);
     }
 
     /**
@@ -168,6 +175,7 @@ public class Game {
      * @return The user input, unless invalid in which case returns the array [-1, -1]
      */
     private int[] validXYFormat(String input){
+        logger.debug("Validating input in x,y format");
         int[] result = {-1, -1}; //invalid to play moves
         if (input != null) {
             String[] splitCoordinates = input.split(",");
@@ -179,6 +187,7 @@ public class Game {
                     result[1] = userInputY;
                 } catch (NumberFormatException e) {
                     //could not parse input as int, invalid
+                    logger.info("Input could not be converted to integer numbers. " + e.getMessage());
                 }
             }
         }
@@ -190,6 +199,7 @@ public class Game {
      * Ends the game
      */
     public void end(){
+        logger.info("Game ended");
         isRunning = false;
     }
 }
