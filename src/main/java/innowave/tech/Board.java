@@ -1,5 +1,7 @@
 package innowave.tech;
 
+import org.apache.log4j.Logger;
+
 public class Board {
     public static final char EMPTY_SYMBOL = ' ';
 
@@ -10,6 +12,7 @@ public class Board {
     private int totalMovesPlayed;
     private int latestX;
     private int latestY;
+    private static final Logger logger = Logger.getLogger(Board.class);
 
     /**
      * Constructor for Board class
@@ -17,6 +20,7 @@ public class Board {
      * @param rowCount number of rows the board must have
      */
     public Board(int colCount, int rowCount) {
+        logger.debug("Initializing " + this.getClass().getSimpleName() + " instance");
         this.colCount = colCount;
         this.rowCount = rowCount;
         this.coordinates = new char[colCount][rowCount];
@@ -26,6 +30,7 @@ public class Board {
             }
         }
 
+        logger.debug("Board initialized with " + this.colCount + "x" + this.rowCount + " dimensions");
         this.totalMovesPlayed = 0;
     }
 
@@ -51,6 +56,7 @@ public class Board {
      * @return Returns true if the move was successful, false otherwise
      */
     public boolean playMove(Player player, int x, int y){
+        logger.debug("playMove -> Playing a move in (" + x + "," + y + ")");
         boolean operationSuccessful = false;
         if (player != null){
             if (validateMove(x, y)) {
@@ -59,11 +65,12 @@ public class Board {
                 this.latestX = x;
                 this.latestY = y;
                 operationSuccessful = true;
+                logger.debug("playMove -> Move was played successfully");
             } else {
-                System.out.println("Board.playMove -> Coordinates aren't valid");
+                logger.info("The coordinates (" + x + "," + y + ") aren't valid");
             }
         } else {
-            System.out.println("Board.playMove -> Invalid player");
+            logger.warn("playMove -> Invalid player");
         }
 
         return operationSuccessful;
@@ -76,6 +83,7 @@ public class Board {
      * @return True if the move is valid, false otherwise
      */
     private boolean validateMove(int x, int y) {
+        logger.debug("validateMove -> Validating coordinates for the move");
         return x >= 0 && x < colCount && y >= 0 && y < rowCount
                 && coordinates[x][y] == EMPTY_SYMBOL;
     }
@@ -86,6 +94,7 @@ public class Board {
      * @return Returns true if the player has won the game in the latest move. Returns false otherwise.
      */
     public boolean checkPlayerVictory(Player player) {
+        logger.debug("checkPlayerVictory -> Checking for player victory");
         if (player != null &&
                 player.getSymbol() == coordinates[latestX][latestY]){// makes sure this player is the one who did the latest move
             char checkSymbol = player.getSymbol();
@@ -112,6 +121,7 @@ public class Board {
      * move. Returns false otherwise.
      */
     private boolean checkThreeInARowHorizontally(char checkSymbol){
+        logger.debug("checkThreeInARowHorizontally -> Checking if there are three in a row horizontally");
         //At most, we only need to check between two positions before and after the latest move coordinates
         //since we check for 3 of the same symbols aligned in a particular direction
 
@@ -141,6 +151,7 @@ public class Board {
      * move. Returns false otherwise.
      */
     private boolean checkThreeInARowVertically(char checkSymbol){
+        logger.debug("checkThreeInARowVertically -> Checking if there are three in a row vertically");
         //At most, we only need to check between two positions before and after the latest move coordinates
         //since we check for 3 of the same symbols aligned in a particular direction
 
@@ -170,6 +181,7 @@ public class Board {
      * move. Returns false otherwise.
      */
     private boolean checkThreeInARowDiagonallyAscending(char checkSymbol){
+        logger.debug("checkThreeInARowDiagonallyAscending -> Checking if there are three in a row in an ascending diagonal (bottom left to top right)");
         //At most, we only need to check between two positions before and after the latest move coordinates
         //since we check for 3 of the same symbols aligned in a particular direction
 
@@ -199,6 +211,7 @@ public class Board {
      * move. Returns false otherwise.
      */
     private boolean checkThreeInARowDiagonallyDescending(char checkSymbol){
+        logger.debug("checkThreeInARowDiagonallyDescending -> Checking if there are three in a row in an descending diagonal (top left to bottom right)");
         //At most, we only need to check between two positions before and after the latest move coordinates
         //since we check for 3 of the same symbols aligned in a particular direction
 
@@ -221,6 +234,7 @@ public class Board {
 
     @Override
     public String toString() {
+        logger.debug("toString -> Printing the board");
         StringBuilder result = new StringBuilder();
         for (int rows = 0; rows < rowCount; rows++) {
             for (int cols = 0; cols < colCount; cols++) {
